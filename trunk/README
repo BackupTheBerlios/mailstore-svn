@@ -1,0 +1,15 @@
+MailStore
+
+Introduction:
+
+MailStore is a tool that is built in python and provides a mail proxy for POP3,IMAP4 and SMTP protocols. However, beyond usual proxies, it makes a backup of all incoming and outgoing email and stores them in a Maildir format. Emails then can be accessed through an IMAP server run on the same machine using the backup Maildirs as mailboxes.
+
+The idea is to provide a realtime , centralized backup of all incoming and outgoing of an organization without the need of user intervention, especially for organizations that use shared email hosting. Many of this hosting providers allow for only POP3 based access of the email. Secondly, due to its shared hosting environment , tehre is Hence all email ends up being downloaded directly to the client. Any backup effort has to be taken up by the user on a periodical basis. This is prone to problems due to the fact that users might either forget or a data disaster might happen in between a backup cycle.
+
+With a backup proxy like this all email is always available at the backup proxy.  Any backup need be done by the administrator only at the proxy server itself. This we believe to be a much more convenient task then backing up user systems individually. Secondly the MailStore server will always have all the emails the user has sent or received at any point ,hence the backup will always be current. 
+
+How it works:
+
+
+
+

@@ -4,11 +4,61 @@ Introduction:
 
 MailStore is a tool that is built in python and provides a mail proxy for POP3,IMAP4 and SMTP protocols. However, beyond usual proxies, it makes a backup of all incoming and outgoing email and stores them in a Maildir format. Emails then can be accessed through an IMAP server run on the same machine using the backup Maildirs as mailboxes.
 
-The idea is to provide a realtime , centralized backup of all incoming and outgoing of an organization without the need of user intervention, especially for organizations that use shared email hosting. Many of this hosting providers allow for only POP3 based access of the email. Secondly, due to its shared hosting environment , tehre is Hence all email ends up being downloaded directly to the client. Any backup effort has to be taken up by the user on a periodical basis. This is prone to problems due to the fact that users might either forget or a data disaster might happen in between a backup cycle.
+The idea is to provide a realtime , centralized backup of all incoming and outgoing of an organization without the need of user intervention, especially for organizations that use shared email hosting. Many of this hosting providers allow for only POP3 based access of the email. Secondly, due to its shared hosting environment , there is limited space hence all email ends up being downloaded directly to the client. Any backup effort has to be taken up by the user on a periodical basis. This is prone to problems due to the fact that users might either forget or a data disaster might happen in between a backup cycle.
 
 With a backup proxy like this all email is always available at the backup proxy.  Any backup need be done by the administrator only at the proxy server itself. This we believe to be a much more convenient task then backing up user systems individually. Secondly the MailStore server will always have all the emails the user has sent or received at any point ,hence the backup will always be current. 
 
-How it works:
+To access the email, a local IMAP server can be run that will provide the user with access to the email that has been backed up. The user may then add this account to their email client and backup all the email out of it locally. (E.g. In Outlook you would probably export all the email in the account). Following that the user will import back the mail back into its original account. 
+
+Requirements:
+
+The mailStore system is built in Python. It has been tested with Python 2.3 and 2.4.
+Any system which support Python 2.3/ Python 2.4 should be able to run it.
+
+
+Setup procedures:
+
+There are 2 parts to the server-end setup. Initially you would setup the mailStore so that all out going/incoming mail is captured. Secondly you will setup your IMAP server to provide local access to the backed up emails. For the IMAP portion, this guide uses Dovecot, however any IMAP server that uses Maildir format and lets you set the dir where the maildirs are stored should work. 
+
+NOTE:I would appreciate any information ontheir setup from people who have set this setup on other IMAP servers so that I can add it to the documentation.
+
+
+Setup - mailStore:
+
+1. Untar the mailStore tarball and copy it to where you would like mailStore to run from. E.g. /usr/local/mailStore
+
+2.Enter the dir you just copied it to and edit config.py. This is the main config file which basically determines the POP/SMTP proxies to be setup , the root of the maildir folders, and the format of the maildir folders. The file is self documented. 
+
+3.Start the mailstore by running python  start_proxies.py
+
+Setup - Dovecot IMAP:
+
+In this section we will setup dovecot to access the maildirs that mailStore uses to copy ingoing and outgoing email. We will also setup dovecot for a plain / simple style authentication method.
+
+1. Install Dovecot as per your distribution/OS. (I install it using DarwinPorts on my Mac OS X)
+
+2.You will then need to configure Dovecot by setting the relevant values in dovecot.conf.
+
+Firstly set the default_mail_env attribute to the following :
+ 
+default_mail_env =maildir:/Users/mohan/Projects/mailStore/mailSpool/%d/%n
+
+to allow the maildir setting we have configured in mailStore to map as how Dovecot needs it.
+
+In the "Authentication processes" section ensure the following settings:
+
+auth_mechanisms = plain
+auth_userdb = passwd-file /tmp/passwd.imap
+auth_passdb = passwd-file /tmp/passwd.imap
+
+The auth-userdb,auth-passdb define the location of a text file that defines the username and password list of the users accessing Dovecot. The important thing to remember is that the username that you set in this file/files should match the directoryname for the maildir format you choose for mailStore. 
+
+E.g. If the maildirs are being stored in the format /var/maildir/yahoo.com/test@yahoo.com , the the username should be test@yahoo.com.
+
+For the format of the passwd.imap file please refer to the Dovecot documentation. (www.dovecot.org)
+
+
+
 
 
 

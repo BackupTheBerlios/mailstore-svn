@@ -26,9 +26,9 @@ Logging information
 """
 #This is a basic log that is useful for debugging. It will store all the exceptions which are not dealt with explicitly
 #useful for tracking cases for particular emails which are not stored for whatever reason
-LOG= #yes,no
-LOG_FILE= #must be writable by the proxy processes
+#LOG= #yes,no
+#LOG_FILE= #must be writable by the proxy processes
 
 #This log will store all incoming and outgoing email from the proxy
-DETAILED_LOG=#yes,no
-DETAILED_LOG_FILE=#must be writable by the proxy processes
+#DETAILED_LOG=#yes,no
+#DETAILED_LOG_FILE=#must be writable by the proxy processes

@@ -3,7 +3,7 @@ import smtp_proxy
 import config
 import Dibbler
 
-from EmailSearchFrontend import EmailSearchFrontend
+#from EmailSearchFrontend import EmailSearchFrontend
 
 #start the smtp proxies
 

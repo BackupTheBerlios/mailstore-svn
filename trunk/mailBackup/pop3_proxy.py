@@ -324,8 +324,7 @@ class BackupProxy(POP3ProxyBase):
         print "in onRetr"
         ok, messageText = response.split('\n', 1)
         #try :
-        domainDir,userDir=maildir.getMaildirPath(self.proxyHostname,self.userName,config.POP_MAILDIR_DOMAIN_FORMAT,config.POP_MAILDIR_USER_FORMAT)
-        currentMaildir=mailDir.MailDir(config.MAILDIR_ROOT_DIR,domainDir,userDir)
+        currentMaildir=mailDir.MailDir(config.MAILDIR_ROOT_DIR,self.proxyHostname,self.userName,config.POP_MAILDIR_DOMAIN_FORMAT,config.POP_MAILDIR_USER_FORMAT)
         currentMaildir.storeEmail(messageText)
            
         #except Exception,e:

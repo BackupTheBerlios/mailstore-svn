@@ -211,12 +211,8 @@ class BackupSMTPProxy(SMTPProxyBase):
         return handler(command, args)
 
     def onProcessData(self, data):
-        
-        #currentMaildir=mailDir.MailDir(self.getMaildir(self.mailFrom))
-        #currentMaildir.storeEmail(data)
-        currentMaildir=mailDir.MailDir(config.MAILDIR_ROOT_DIR,self.proxyHostname,self.mailFrom.split('@')[0],'Sent')
+        currentMaildir=mailDir.MailDir(config.MAILDIR_ROOT_DIR,self.proxyHostname,self.mailFrom,config.SMTP_MAILDIR_DOMAIN_FORMAT,config.SMTP_MAILDIR_USER_FORMAT,'Sent')
         currentMaildir.storeEmail(data)
-        
         return data
 
 

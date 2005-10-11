@@ -39,10 +39,31 @@ def gettimeseq():
 
 class MailDir:
 
-    def __init__(self,maildirRoot,domain,username,mailFolder=None):
+    def __init__(self,maildirRoot,domain,username,domainFormat,userFormat,mailFolder=None):
         self.MAILDIR_ROOT=maildirRoot
-        self.__maildir = self.getMaildirPath(domain,username,mailFolder)
+        domainDirName,userDirName=self.processMaildirPath(domain,username,domainFormat,userFormat)
+        print domainDirName,userDirName
+        self.__maildir = self.getMaildirPath(domainDirName,userDirName,mailFolder)
         #print self.__maildir
+
+    def getMaildirPath(self,domain,user,mailFolder):
+        #test if the maildir for the domain path exists, else make it
+        if not os.path.exists(os.path.join(self.MAILDIR_ROOT,domain)):
+            os.mkdir(os.path.join(self.MAILDIR_ROOT,domain))
+            os.mkdir(os.path.join(self.MAILDIR_ROOT,domain,user))
+
+       #test if the maildir for the user exists
+        elif not os.path.exists(os.path.join(self.MAILDIR_ROOT,domain,user)):
+            os.mkdir(os.path.join(self.MAILDIR_ROOT,domain,user))
+
+        #test if the users sent folder exists
+        if mailFolder != None:
+            if not os.path.exists(os.path.join(self.MAILDIR_ROOT,domain,user,'.'+mailFolder)):
+                os.mkdir(os.path.join(self.MAILDIR_ROOT,domain,user,'.'+mailFolder))
+
+            return os.path.join(self.MAILDIR_ROOT,domain,user,'.'+mailFolder)
+        else:
+            return os.path.join(self.MAILDIR_ROOT,domain,user)
 
     def isMaildir(self):
         if os.path.exists(os.path.join(self.__maildir,'new')) and os.path.exists(os.path.join(self.__maildir,'cur')) and os.path.exists(os.path.join(self.__maildir,'tmp')):
@@ -61,12 +82,12 @@ class MailDir:
     def storeEmail(self,data):
         if self.isMaildir()==False:
             self.createMaildir()
-        
+
         #f=open(self.__maildir+'/new/testemail'+`time.time()`,'w')
         #f.write(data)
         #f.close()
         self.savemessage(data,os.path.join(self.__maildir,'new'),os.path.join(self.__maildir,'tmp'))
-        
+
     #def savemessage(self, uid, content, flags):
     def savemessage(self,content, newdir,tmpdir):
         #newdir = os.path.join(self.getfullname(), 'new')
@@ -107,57 +128,44 @@ class MailDir:
         #return uid
         return os.path.join(newdir, messagename)
 
-    def getMaildirPath(self,domain,user,mailFolder):
-        #test if the maildir for the domain path exists, else make it
-        if not os.path.exists(os.path.join(self.MAILDIR_ROOT,domain)):
-            os.mkdir(os.path.join(self.MAILDIR_ROOT,domain))
-            os.mkdir(os.path.join(self.MAILDIR_ROOT,domain,user))
 
-       #test if the maildir for the user exists
-        elif not os.path.exists(os.path.join(self.MAILDIR_ROOT,domain,user)):
-            os.mkdir(os.path.join(self.MAILDIR_ROOT,domain,user))
 
-        #test if the users sent folder exists
-        if mailFolder != None:
-            if not os.path.exists(os.path.join(self.MAILDIR_ROOT,domain,user,'.'+mailFolder)):
-                os.mkdir(os.path.join(self.MAILDIR_ROOT,domain,user,'.'+mailFolder))
+    """
+    POP_MAILDIR_DOMAIN_FORMAT='proxyHostname' #options include proxyHostname,proxyHostnameSubDomain,userNameSubDomain
 
-            return os.path.join(self.MAILDIR_ROOT,domain,user,'.'+mailFolder)
-        else:
-            return os.path.join(self.MAILDIR_ROOT,domain,user)
+    POP_MAILDIR_USER_FORMAT='userName' #options include userNamePreDomain,userName
 
-"""
-POP_MAILDIR_DOMAIN_FORMAT='proxyHostname' #options include proxyHostname,proxyHostnameSubDomain,userNameSubDomain
+    SMTP_MAILDIR_DOMAIN_FORMAT='proxyHostname' #options include proxyHostname,proxyHostnameSubDomain,userNameSubDomain
 
-POP_MAILDIR_USER_FORMAT='userName' #options include userNamePreDomain,userName
-
-SMTP_MAILDIR_DOMAIN_FORMAT='proxyHostname' #options include proxyHostname,proxyHostnameSubDomain,userNameSubDomain
-
-SMTP_MAILDIR_USER_FORMAT='userName' #options include userNamePreDomain,userName
-"""
-def getMaildirPath(domain,user,domainFormat,userFormat):
-    if domainFormat not in ('proxyHostname','proxyHostnameSubDomain','userNameSubDomain') or domainFormat=='proxyHostName':
-        domainReturned=domain
-    elif domainFormat=='proxyHostnameSubDomain':
-        if len(domain.split('.',1))>1:
-            domainReturned=domain.split('.',1)[1]
-        else:
+    SMTP_MAILDIR_USER_FORMAT='userName' #options include userNamePreDomain,userName
+    """
+    def processMaildirPath(self,domain,user,domainFormat,userFormat):
+        if domainFormat not in ('proxyHostname','proxyHostnameSubDomain','userNameSubDomain'):
             domainReturned=domain
-    elif domainFormat=='userNameSubDomain':
-        if len(user.split('@',1))>1:
-            domainReturned=user.split('@',1)[1]
+        elif domainFormat=='proxyHostnameSubDomain':
+            if len(domain.split('.',1))>1:
+                domainReturned=domain.split('.',1)[1]
+            else:
+                domainReturned=domain
+        elif domainFormat=='userNameSubDomain':
+            if len(user.split('@',1))>1:
+                domainReturned=user.split('@',1)[1]
+            else:
+                domainReturned=user
+        elif domainFormat=='proxyHostname':
+            domainReturned=domain
         else:
-            domainReturned=user
+            print domainFormat
             
-    if userFormat not in ('userNamePreDomain','userName') or userFormat=='userName':
-        userReturned=user
-    elif userFormat=='userNamePreDomain':
-        if len(user.split('@',1))>1:
-            userReturned=user.split('@',1)[0]
-        else:
+        if userFormat not in ('userNamePreDomain','userName') or userFormat=='userName':
             userReturned=user
+        elif userFormat=='userNamePreDomain':
+            if len(user.split('@',1))>1:
+                userReturned=user.split('@',1)[0]
+            else:
+                userReturned=user
             
-    return domainReturned,userReturned
+        return domainReturned,userReturned
 
 """
     >>> import mailDir

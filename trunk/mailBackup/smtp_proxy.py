@@ -218,28 +218,23 @@ class BackupSMTPProxy(SMTPProxyBase):
 
     def onRcptTo(self, command, args):
         self.mailTo = self.stripAddress(args[0])
-        
 
         return "%s:%s" % (command, ' '.join(args))
 
     def onData(self, command, args):
-        
+
         self.inData = True
-        """
-        if self.train_as_ham == True or self.train_as_spam == True:
-            self.push("354 Enter data ending with a . on a line by itself\r\n")
-            return None
-        """
+
         print "onData"
         self.mailBody=command + ' ' + ' '.join(args)
         return command + ' ' + ' '.join(args)
 
     def onMailFrom(self, command, args):
         """Just like the default handler, but has the necessary colon."""
-        
+
         mailsrch = re.compile(r'[\w\-][\w\-\.]+@[\w\-][\w\-\.]+[a-zA-Z]{1,4}')
         self.mailFrom=mailsrch.findall(' '.join(args))[0]
-        
+
         rv = "%s:%s" % (command, ' '.join(args))
         return rv
 

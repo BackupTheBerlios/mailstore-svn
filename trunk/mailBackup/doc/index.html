@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+  <title>MailStore :: Mail backup made easy</title>
+</head>
+
+
+<body>
+
+
+<big style="font-style: italic;"><big><big>MailStore - </big></big></big><big style="font-family: Helvetica,Arial,sans-serif;"><big>mail backup made easy</big></big><br>
+
+
+<br>
+
+
+<big style="font-weight: bold;">Introduction:
+</big><br>
+
+
+<br>
+
+
+MailStore is a tool that is built in python and provides a mail proxy
+for POP3,IMAP4 and SMTP protocols. However, beyond usual proxies, it
+makes a backup of all incoming and outgoing email and stores them in a
+Maildir format. Emails then can be accessed through an IMAP server run
+on the same machine using the backup Maildirs as mailboxes.
+<br>
+
+
+<br>
+
+
+<big style="font-weight: bold;">The problem:</big><br>
+
+
+<br>
+
+
+The idea is to provide a realtime , centralized backup of all incoming
+and outgoing of an organization without the need of user intervention,
+especially for organizations that use shared email hosting. Many of
+this hosting providers allow for only POP3 based access of the email. <br>
+
+
+<br>
+
+
+Secondly, due to its shared hosting environment , there is limited
+space hence all email ends up being downloaded directly to the client.
+Any backup effort has to be taken up by the user on a periodical basis.
+This is prone to problems due to the fact that users might either
+forget or a data disaster might happen in between a backup cycle.
+<br>
+
+
+<br>
+
+
+<big style="font-weight: bold;">The solution:</big><br>
+
+
+<br>
+
+
+With a backup proxy like this all email is always available at the
+backup proxy. Any backup need be done by the administrator only at the
+proxy server itself. This we believe to be a much more convenient task
+then backing up user systems individually.<br>
+
+
+<br>
+
+
+Secondly the MailStore server will always have all the emails the user
+has sent or received at any point ,hence the backup will always be
+current. To access the email, a local IMAP server can be run that will
+provide the user with access to the email that has been backed up. The
+user may then add this account to their email client and backup all the
+email out of it locally. (E.g. In Outlook you would probably export all
+the email in the account). Following that the user will import back the
+mail back into its original account. <br>
+<br>
+Thirdly , the system requires minimal administrator involvement. It
+handles the creation of new maildirs for new&nbsp; domain/user
+combinations. Hence administrators dont have extra config files to play
+with whenevr new users are added to the system. Whether a user exists
+or not is left up to the mailserver that mailStore is proxying.<br>
+
+
+<br>
+
+
+<big style="font-weight: bold;">Requirements:
+</big><br>
+
+
+<br>
+
+
+The mailStore system is built in Python. It has been tested with Python
+2.3 and 2.4.
+Any system which support Python 2.3/ Python 2.4 should be able to run
+it.<br>
+
+
+<br>
+
+
+<big><span style="font-weight: bold;">Contact:
+
+
+
+</span></big><br>
+<br>
+Please report bugs through the bug reporting
+tool <a href="https://developer.berlios.de/bugs/?group_id=4462">here</a>.<br>
+
+
+Email me at : mohangk at gmail.com<br>
+
+
+<br>
+
+
+<big><span style="font-weight: bold;">Download:
+
+
+
+</span><br>
+<br>
+<a href="https://developer.berlios.de/project/showfiles.php?group_id=4462&amp;release_id=7603">Initial
+release</a><span style="font-weight: bold;"><br>
+
+
+<br>
+
+
+Documentation:
+
+</span></big><br>
+
+
+<a href="setup.html">SETUP</a><br>
+<a href="credits.html">
+
+CREDITS</a><br>
+<a href="license.html">
+
+LICENSE</a><br>
+
+
+<br>
+
+
+<br>
+
+
+<hr>
+<div style="text-align: right; margin-left: 400px; font-weight: bold;"><small>a
+workingcode project</small></div>
+
+
+</body>
+</html>

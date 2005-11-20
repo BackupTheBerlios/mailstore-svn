@@ -2,6 +2,12 @@
 MailStore :: mailBackup configuration
 """
 
+
+DEFAULT=20
+DETAILED=10
+VERY_DETAILED=5
+
+
 """
 The following directory determines the root of all the maildirs that the system will generate. 
 E.g. if the value is /var/spool/mailbackup, directories will be created from that point in the form of
@@ -12,7 +18,7 @@ the user you start the proxies as.
 
 """
 
-MAILDIR_ROOT_DIR = '/var/spool/mailbackup'
+MAILDIR_ROOT_DIR = '/Path/to/backup'
 
 """
 The following two variables  determines the different POP/SMTP proxies that can be setup. 
@@ -30,9 +36,8 @@ the proxies in.
 
 """
 
-POP_PROXY = [['mail.pop3.com',110,8110]]
-SMTP_PROXY = [['mail.smtp.com',25,8025]]
-
+POP_PROXY =[['mail1.pop3.com',serverport,localport], ['mail2.pop3.com',serverport,localport]] 
+SMTP_PROXY = [['mail.smtp.com',serverport,localport], ['mail2.pop3.com',serverport,localport]]
 """
 The following variables below determines the maildir paths of your incoming and outgoing emails
 
@@ -86,9 +91,13 @@ Logging information - not implemented yet
 """
 #This is a basic log that is useful for debugging. It will store all the exceptions which are not dealt with explicitly
 #useful for tracking cases for particular emails which are not stored for whatever reason
-#LOG= #yes,no
-#LOG_FILE= #must be writable by the proxy processes
+LOG_FILE='/tmp/test.log' #must be writable by the proxy processes
 
-#This log will store all incoming and outgoing email from the proxy
-#DETAILED_LOG=#yes,no
-#DETAILED_LOG_FILE=#must be writable by the proxy processes
+#This log will details of all incoming and outgoing email information from the proxy
+LOG_LEVEL=VERY_DETAILED
+
+#experimental stuff
+
+SMTP_USERNAME='smtplogin'
+SMTP_PASSWORD='smtppassword'
+

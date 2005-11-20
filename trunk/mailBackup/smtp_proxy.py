@@ -9,8 +9,10 @@ import asynchat
 import getopt
 import sys
 import os
+import logging
 
 from pop3_proxy import ServerLineReader
+from state import state
 
 import Dibbler
 
@@ -90,7 +92,7 @@ class SMTPProxyBase(Dibbler.BrighterAsyncChat):
         self.request = self.request + data
 
     def found_terminator(self):
-        """Asynchat override."""
+        """Asynchat override.""" 
         verb = self.request.strip().upper()
         if verb == 'KILL':
             self.socket.shutdown(2)
@@ -126,6 +128,8 @@ class SMTPProxyBase(Dibbler.BrighterAsyncChat):
             if cooked is not None:
                 self.serverSocket.push(cooked + '\r\n')
         self.command = self.args = self.request = ''
+       
+        
 
     def onResponse(self):
         # If onServerLine() decided that the server has closed its
@@ -146,10 +150,8 @@ class BayesSMTPProxyListener(Dibbler.Listener):
     def __init__(self, serverName, serverPort, proxyPort):
         proxyArgs = (serverName, serverPort)
         Dibbler.Listener.__init__(self, proxyPort, BackupSMTPProxy,proxyArgs)
-        #print 'SMTP Listener on port %s is proxying %s:%d' % \
-        #       (_addressPortStr(proxyPort), serverName, serverPort)
+        logging.warning('Starting : SMTP Listener on port %d is proxying %s:%d' %(proxyPort, serverName, serverPort))
 
-        
 class BackupSMTPProxy(SMTPProxyBase):
     
     """Proxies between an email client and a SMTP server, inserting
@@ -175,24 +177,48 @@ class BackupSMTPProxy(SMTPProxyBase):
                          'MAIL FROM': self.onMailFrom}
         #self.trainer = trainer
         self.isClosed = False
+        state.totalSessions += 1
+        state.activeSessions += 1
         
         self.proxyHostname=serverName
         self.MAILDIR_ROOT=config.MAILDIR_ROOT_DIR
+        self.clientIP=str(clientSocket.getpeername()[0])
+        logging.info('SMTP Proxy New conn.IP:%s Total Sessions:%d Total active sessions:%d'%(self.clientIP,state.totalSessions,state.activeSessions))
+
 
     def send(self, data):
+        
+        if config.LOG_LEVEL<=config.VERY_DETAILED:
+            logging.log(config.VERY_DETAILED,"SMTP Proxy IP:%s Send:%s"%(self.clientIP,data))
+            
         try:
             return SMTPProxyBase.send(self, data)
         except socket.error:
             # The email client has closed the connection - 40tude Dialog
             # does this immediately after issuing a QUIT command,
             # without waiting for the response.
+            #logging.warning("SMTP Proxy IP:%s Sudden termination when trying to send data."%(self.clientIP))
+
             self.close()
 
+    def recv(self, size):
+        """Logs the data to the log file."""
+        data = SMTPProxyBase.recv(self, size)
+        #if options["globals", "verbose"]:
+        #    state.logFile.write(data)
+        #    state.logFile.flush()
+        if config.LOG_LEVEL<=config.VERY_DETAILED:
+            logging.log(config.VERY_DETAILED,"SMTP Proxy IP:%s Recv:%s"%(self.clientIP,data))
+        return data
+            
     def close(self):
         # This can be called multiple times by async.
         if not self.isClosed:
             self.isClosed = True
+            state.activeSessions -= 1
             SMTPProxyBase.close(self)
+            logging.info('SMTP Proxy Closing connection IP:%s Balance active sessions:%d'%(self.clientIP,state.activeSessions))
+
 
     def stripAddress(self, address):
         """
@@ -211,9 +237,16 @@ class BackupSMTPProxy(SMTPProxyBase):
         return handler(command, args)
 
     def onProcessData(self, data):
-        currentMaildir=mailDir.MailDir(config.MAILDIR_ROOT_DIR,self.proxyHostname,self.mailFrom,config.SMTP_MAILDIR_DOMAIN_FORMAT,config.SMTP_MAILDIR_USER_FORMAT,'Sent')
-        currentMaildir.storeEmail(data)
-        return data
+       try:
+           currentMaildir=mailDir.MailDir(config.MAILDIR_ROOT_DIR,self.proxyHostname,self.mailFrom,config.SMTP_MAILDIR_DOMAIN_FORMAT,config.SMTP_MAILDIR_USER_FORMAT,'Sent')
+           newEmailLocation=currentMaildir.storeEmail(data)
+            
+           if config.LOG_LEVEL<=config.DETAILED:
+               logging.debug('SMTP Proxy To:%s From:%s Storing message at location:%s'%(self.mailTo,self.mailFrom,newEmailLocation))
+       except Exception,e:
+           logging.error('IP:%s Failed to store the email at:%s ,due to the following exception %s'%(self.clientIP,newEmailLocation,str(e)))
+           #empty except to always trap errors to ensure that we always return the email body
+       return data
 
 
     def onRcptTo(self, command, args):
@@ -225,7 +258,6 @@ class BackupSMTPProxy(SMTPProxyBase):
 
         self.inData = True
 
-        print "onData"
         self.mailBody=command + ' ' + ' '.join(args)
         return command + ' ' + ' '.join(args)
 

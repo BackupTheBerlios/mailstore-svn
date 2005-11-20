@@ -1,5 +1,6 @@
 import mailDir,config
-import os, sys, re, errno, getopt, time, traceback, socket, cStringIO,email
+from state import state
+import os, sys, re, errno, getopt, time, traceback, socket, cStringIO,email,logging
 from thread import start_new_thread
 
 import Dibbler
@@ -57,14 +58,13 @@ class ServerLineReader(Dibbler.BrighterAsyncChat):
             # See also: [ 1113863 ] sb_tray eats all cpu time
             now = time.time()
             then = time.time() - 3600
-            #if error not in state.reported_errors or \
-            #   options["globals", "verbose"] or \
-            #   state.reported_errors[error] < then:
-            #    print >>sys.stderr, error
+            if error not in state.reported_errors or\
+               state.reported_errors[error] < then:
+               logging.error(error)
 
-                # Record this error in the list of ones we have seen this
-                # session.
-             #   state.reported_errors[error] = now
+               # Record this error in the list of ones we have seen this
+               # session.
+               state.reported_errors[error] = now
 
             self.lineCallback('-ERR %s\r\n' % error)
             self.lineCallback('')   # "The socket's been closed."
@@ -74,6 +74,7 @@ class ServerLineReader(Dibbler.BrighterAsyncChat):
             
     def collect_incoming_data(self, data):
         self.request = self.request + data
+        print self.request
 
     def found_terminator(self):
         self.lineCallback(self.request + '\r\n')
@@ -109,8 +110,7 @@ class POP3ProxyBase(Dibbler.BrighterAsyncChat):
         self.startTime = 0          # (ditto)
         
         
-        print 'clientSocket:'
-        print clientSocket
+
         
         if not self.onIncomingConnection(clientSocket):
             # We must refuse this connection, so pass an error back
@@ -138,8 +138,9 @@ class POP3ProxyBase(Dibbler.BrighterAsyncChat):
         #        return True
 
         #return False
+
         return True
-        
+
     def onTransaction(self, command, args, response):
         """Overide this.  Takes the raw request and the response, and
         returns the (possibly processed) response to pass back to the
@@ -261,8 +262,8 @@ class BayesProxyListener(Dibbler.Listener):
         Dibbler.Listener.__init__(self, proxyPort, BackupProxy, proxyArgs)
         #print 'Listener on port %s is proxying %s:%d' % \
         #       (_addressPortStr(proxyPort), serverName, serverPort)
-               
-               
+        logging.warning('Starting : POP3 Listener on port %d is proxying %s:%d' %(proxyPort, serverName, serverPort))
+
 class BackupProxy(POP3ProxyBase):
     """Proxies between an email client and a POP3 server, storing the 
     email being passed to an POP3 server
@@ -273,14 +274,20 @@ class BackupProxy(POP3ProxyBase):
      o USER:
         o Captures the username being sent to the proxy
     """
+    
     def __init__(self, clientSocket, serverName, serverPort):
+        
+        
         POP3ProxyBase.__init__(self, clientSocket, serverName, serverPort)
         self.handlers = {'RETR': self.onRetr,'USER': self.onUser}
-        #state.totalSessions += 1
-        #state.activeSessions += 1
-        self.isClosed = False   
+        state.totalSessions += 1
+        state.activeSessions += 1
+                
+        self.isClosed = False
         self.MAILDIR_ROOT=config.MAILDIR_ROOT_DIR
         self.proxyHostname=serverName
+        self.clientIP=str(clientSocket.getpeername()[0])
+        logging.info('POP3 Proxy New conn.IP:%s Total Sessions:%d Total active sessions:%d'%(self.clientIP,state.totalSessions,state.activeSessions))
 
 
     def send(self, data):
@@ -288,13 +295,18 @@ class BackupProxy(POP3ProxyBase):
         #if options["globals", "verbose"]:
         #    state.logFile.write(data)
         #    state.logFile.flush()
-        #print data
+        
+        if config.LOG_LEVEL<=config.VERY_DETAILED:
+            logging.log(config.VERY_DETAILED,"POP3 Proxy IP:%s Send:%s"%(self.clientIP,data))
+            
         try:
             return POP3ProxyBase.send(self, data)
         except socket.error:
             # The email client has closed the connection - 40tude Dialog
             # does this immediately after issuing a QUIT command,
             # without waiting for the response.
+            #logging.warning("POP3 Proxy IP:%s Sudden termination when trying to send data."%(self.clientIP))
+
             self.close()
 
     def recv(self, size):
@@ -303,15 +315,18 @@ class BackupProxy(POP3ProxyBase):
         #if options["globals", "verbose"]:
         #    state.logFile.write(data)
         #    state.logFile.flush()
-        #print data
+        if config.LOG_LEVEL<=config.VERY_DETAILED:
+            logging.log(config.VERY_DETAILED,"POP 3 Proxy IP:%s Recv:%s"%(self.clientIP,data))
         return data
 
     def close(self):
         # This can be called multiple times by async.
         if not self.isClosed:
             self.isClosed = True
-            #state.activeSessions -= 1
+            state.activeSessions -= 1
             POP3ProxyBase.close(self)
+            logging.info('POP3 Proxy Closing connection IP:%s Balance active sessions:%d'%(self.clientIP,state.activeSessions))
+
 
     def onTransaction(self, command, args, response):
         """Takes the raw request and response, and returns the
@@ -321,15 +336,17 @@ class BackupProxy(POP3ProxyBase):
         return handler(command, args, response)
 
     def onRetr(self, command, args, response):
-        print "in onRetr"
         ok, messageText = response.split('\n', 1)
-        #try :
-        currentMaildir=mailDir.MailDir(config.MAILDIR_ROOT_DIR,self.proxyHostname,self.userName,config.POP_MAILDIR_DOMAIN_FORMAT,config.POP_MAILDIR_USER_FORMAT)
-        currentMaildir.storeEmail(messageText)
-           
-        #except Exception,e:
+        try :
+            currentMaildir=mailDir.MailDir(config.MAILDIR_ROOT_DIR,self.proxyHostname,self.userName,config.POP_MAILDIR_DOMAIN_FORMAT,config.POP_MAILDIR_USER_FORMAT)
+            newEmailLocation=currentMaildir.storeEmail(messageText)
+            
+            if config.LOG_LEVEL<=config.DETAILED:
+                msg = email.message_from_string(messageText)
+                logging.debug('POP3 Proxy To:%s From:%s Storing message at location:%s'%(self.userName,msg.get('from'),newEmailLocation))
+        except Exception,e:
+           logging.error('IP:%s Failed to store the email at:%s ,due to the following exception %s'%(self.clientIP,newEmailLocation,str(e)))
            #empty except to always trap errors to ensure that we always return the email body
-           #pass
 
         return response
 
@@ -340,4 +357,6 @@ class BackupProxy(POP3ProxyBase):
     def onUnknown(self, command, args, response):
         """Default handler; returns the server's response verbatim."""
         return response
+        
+
 

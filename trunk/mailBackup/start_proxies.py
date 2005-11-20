@@ -3,6 +3,24 @@ import smtp_proxy
 import config
 import Dibbler
 
+import logging
+
+
+#setup the basic logging related info
+
+if config.LOG_FILE != '' :
+    if config.LOG_LEVEL==config.DETAILED:
+        loggingLevel=logging.DEBUG
+    elif config.LOG_LEVEL==config.VERY_DETAILED:
+        loggingLevel=config.VERY_DETAILED
+    else:
+        loggingLevel=logging.INFO
+
+    logging.basicConfig(level=loggingLevel,
+                        format='%(asctime)s %(levelname)s %(message)s',
+                        filename=config.LOG_FILE,
+                        filemode='a+')
+
 #from EmailSearchFrontend import EmailSearchFrontend
 
 #start the smtp proxies
@@ -24,4 +42,9 @@ if len(config.POP_PROXY) > 0:
 #httpServer.register(EmailSearchFrontend())
 
 Dibbler.run()
+
+
+
+
+
     

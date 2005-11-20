@@ -42,7 +42,6 @@ class MailDir:
     def __init__(self,maildirRoot,domain,username,domainFormat,userFormat,mailFolder=None):
         self.MAILDIR_ROOT=maildirRoot
         domainDirName,userDirName=self.processMaildirPath(domain,username,domainFormat,userFormat)
-        print domainDirName,userDirName
         self.__maildir = self.getMaildirPath(domainDirName,userDirName,mailFolder)
         #print self.__maildir
 
@@ -86,7 +85,9 @@ class MailDir:
         #f=open(self.__maildir+'/new/testemail'+`time.time()`,'w')
         #f.write(data)
         #f.close()
-        self.savemessage(data,os.path.join(self.__maildir,'new'),os.path.join(self.__maildir,'tmp'))
+        return self.savemessage(data,os.path.join(self.__maildir,'new'),os.path.join(self.__maildir,'tmp'))
+
+
 
     #def savemessage(self, uid, content, flags):
     def savemessage(self,content, newdir,tmpdir):
@@ -154,8 +155,6 @@ class MailDir:
                 domainReturned=user
         elif domainFormat=='proxyHostname':
             domainReturned=domain
-        else:
-            print domainFormat
             
         if userFormat not in ('userNamePreDomain','userName') or userFormat=='userName':
             userReturned=user
